@@ -106,6 +106,10 @@ target_link_libraries(edges_pose_refiner
                       ${PCL_LIBRARIES}
                       ${OpenCV_LIBRARIES}
                       ${opencv_candidate_LIBRARIES}
+					  /usr/local/lib/libgsl.so
+                      /usr/local/lib/libgsl.a
+                      /usr/local/lib/libgslcblas.so
+                      /usr/local/lib/libgslcblas.a
 )
 
 install(TARGETS edges_pose_refiner fdcm
@@ -120,6 +124,11 @@ find_package(PythonLibs)
 target_link_libraries(sample edges_pose_refiner
                              ${PYTHON_LIBRARIES}
                              ${PCL_LIBRARIES}
+							 /usr/local/lib/libgsl.so
+	                         /usr/local/lib/libgsl.a
+      	   	                 /usr/local/lib/libgslcblas.so
+               		         /usr/local/lib/libgslcblas.a
+
 )
 
 set(USE_ON_ROBOT False)

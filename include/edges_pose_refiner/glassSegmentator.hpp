@@ -11,6 +11,11 @@
 #include <opencv2/core/core.hpp>
 
 #include "edges_pose_refiner/pinholeCamera.hpp"
+#include<math.h>
+#include <vector>
+#include <gsl/gsl_multifit.h>
+#include <stdbool.h>
+
 
 struct GlassSegmentatorParams
 {
@@ -76,6 +81,11 @@ public:
    */
   void segment(const cv::Mat &bgrImage, const cv::Mat &depthMat, const cv::Mat &registrationMask, int &numberOfComponents,
                cv::Mat &glassMask, const std::vector<cv::Point2f> *tableHull = 0);
+  bool polynomialfit(int obs, int degree, double *dx, double *dy, double *store);
+  float standard_deviation(float data[], int n);
+  void AroundForeground(cv::Mat &src, cv::Mat &dst, long foreground_pixel);
+  double transparentScore(const cv::Mat &bgrImage, cv::Mat &glassMask);
+  void rickySegment(const cv::Mat &bgrImage, const cv::Mat &HImage, const cv::Mat &depthMat, cv::Mat &glassMask);
 
 private:
   GlassSegmentatorParams params;
