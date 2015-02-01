@@ -486,6 +486,196 @@ void Detector::detect(const cv::Mat &srcBgrImage, const cv::Mat &srcDepth, const
   }
 }
 
+void Detector::detect(const cv::Mat &srcBgrImage, const cv::Mat &srcHImage, const cv::Mat &srcDepth, const cv::Mat &srcRegistrationMask,
+                      std::vector<PoseRT> &poses_cam, std::vector<float> &posesQualities, std::vector<std::string> &detectedObjectNames,
+                      Detector::DebugInfo *debugInfo) const
+{
+    detect(srcBgrImage, srcHImage, srcDepth, srcRegistrationMask, vector<Point3f>(), poses_cam, posesQualities, detectedObjectNames, debugInfo);
+}
+
+
+void Detector::detect(const cv::Mat &srcBgrImage, const cv::Mat &srcHImage, const cv::Mat &srcDepth, const cv::Mat &srcRegistrationMask, const std::vector<cv::Point3f> &sceneCloud, std::vector<PoseRT> &poses_cam, std::vector<float> &posesQualities, std::vector<std::string> &detectedObjectNames, Detector::DebugInfo *debugInfo) const
+{
+  CV_Assert(srcBgrImage.size() == srcDepth.size());
+  CV_Assert(srcRegistrationMask.size() == srcDepth.size());
+  PinholeCamera validTestCamera = srcCamera;
+  if (validTestCamera.imageSize != validTestImageSize)
+  {
+    validTestCamera.resize(validTestImageSize);
+  }
+
+  Mat bgrImage, depth, registrationMask;
+  if (bgrImage.size() != validTestImageSize)
+  {
+    resize(srcBgrImage, bgrImage, validTestImageSize);
+    resize(srcDepth, depth, validTestImageSize);
+    resize(srcRegistrationMask, registrationMask, validTestImageSize);
+  }
+  else
+  {
+    bgrImage = srcBgrImage;
+    depth = srcDepth;
+    registrationMask = srcRegistrationMask;
+  }
+
+  if (bgrImage.size() != validTestImageSize)
+  {
+    std::stringstream error;
+    error << "RGB resolution is " << bgrImage.cols << "x" << bgrImage.rows;
+    error << ", but valid resolution is " << validTestImageSize.width << "x" << validTestImageSize.height;
+    CV_Error(CV_StsBadArg, error.str());
+  }
+  CV_Assert(bgrImage.size() == validTestImageSize);
+  CV_Assert(depth.size() == validTestImageSize);
+  CV_Assert(registrationMask.size() == validTestImageSize);
+
+#ifdef VISUALIZE_DETECTION
+  cv::imshow("bgrImage", bgrImage);
+  cv::imshow("depth", depth);
+  cv::waitKey(1000);
+#endif
+
+  cv::Vec4f tablePlane;
+  std::vector<cv::Point2f> tableHull;
+
+  bool isEstimated;
+  switch(params.planeSegmentationMethod)
+  {
+    case PCL:
+      isEstimated = computeTableOrientationByPCL(params.pclPlaneSegmentationParams.downLeafSize,
+                      params.pclPlaneSegmentationParams.kSearch, params.pclPlaneSegmentationParams.distanceThreshold,
+                      sceneCloud, tablePlane, &validTestCamera, &tableHull, params.pclPlaneSegmentationParams.clusterTolerance, params.pclPlaneSegmentationParams.verticalDirection);
+      break;
+
+    case FIDUCIALS:
+      isEstimated = computeTableOrientationByFiducials(validTestCamera, bgrImage, tablePlane);
+      break;
+
+    case RGBD:
+      //TODO: use InputArray
+      std::vector<Point> tableHullInt;
+      isEstimated = computeTableOrientationByRGBD(depth, validTestCamera, tablePlane, &tableHullInt, params.pclPlaneSegmentationParams.verticalDirection);
+      for (size_t i = 0; i < tableHullInt.size(); ++i)
+      {
+        tableHull.push_back(tableHullInt[i]);
+      }
+      break;
+  }
+
+  if (!isEstimated)
+  {
+    CV_Error(CV_StsOk, "Cannot find a table plane");
+  }
+
+#ifdef VERBOSE
+  std::cout << "table plane is estimated" << std::endl;
+#endif
+
+  GlassSegmentator glassSegmentator(params.glassSegmentationParams);
+  int numberOfComponents;
+  cv::Mat glassMask, rickyGlassMask;
+
+  switch(params.glassSegmentationMethod)
+  {
+    case MANUAL:
+      segmentGlassManually(bgrImage, glassMask);
+      //TODO: allow manual segmentation of several objects
+      numberOfComponents = 1;
+      break;
+
+    case AUTOMATIC:
+      switch(params.planeSegmentationMethod)
+      {
+        case PCL:
+        case RGBD:
+          glassSegmentator.segment(bgrImage, depth, registrationMask, numberOfComponents, glassMask, &tableHull);
+		  //Ricky!!!
+		  /* Assign my own glassMask */
+		  glassSegmentator.rickySegment(bgrImage, srcHImage, depth, rickyGlassMask);
+          break;
+
+        case FIDUCIALS:
+          glassSegmentator.segment(bgrImage, depth, registrationMask, numberOfComponents, glassMask);
+          break;
+      }
+      break;
+  }
+
+  if (debugInfo != 0)
+  {
+    debugInfo->glassMask = glassMask;
+    debugInfo->tablePlane = tablePlane;
+    debugInfo->tableHull = tableHull;
+  }
+#ifdef VERBOSE
+  std::cout << "glass is segmented" << std::endl;
+#endif
+  if (numberOfComponents == 0)
+  {
+    CV_Error(CV_StsOk, "Cannot segment a transparent object");
+  }
+
+//#ifdef VISUALIZE_DETECTION
+#if 1
+  cv::Mat segmentation = drawSegmentation(bgrImage, glassMask);
+  cv::Mat rickySegmentation = drawSegmentation(bgrImage, rickyGlassMask);
+  //cv::imshow("glassMask", glassMask);
+  cv::imshow("segmentation", segmentation);
+  cv::imshow("Ricky segmentation", rickySegmentation);
+  cv::waitKey();
+#endif
+
+#ifdef TRANSPARENT_DEBUG
+  cv::imwrite("color.png", *color_);
+  cv::imwrite("depth.png", *depth_);
+  cv::imwrite("glass.png", glassMask);
+  cv::FileStorage fs("input.xml", cv::FileStorage::WRITE);
+  fs << "K" << *K_;
+  fs << "image" << *color_;
+  fs << "depth" << *depth_;
+  fs << "points3d" << *cloud_;
+  fs.release();
+#endif
+
+
+  poses_cam.clear();
+  detectedObjectNames.clear();
+  posesQualities.clear();
+  for (std::map<std::string, PoseEstimator>::const_iterator it = poseEstimators.begin(); it != poseEstimators.end(); ++it)
+  {
+#ifdef VERBOSE
+    std::cout << "starting to estimate pose..." << std::endl;
+#endif
+    std::vector<PoseRT> currentPoses;
+    std::vector<float> currentPosesQualities;
+
+    vector<Mat> initialSilhouettes;
+    vector<Mat> *initialSilhouettesPtr = debugInfo == 0 ? 0 : &initialSilhouettes;
+    vector<PoseRT> *initialPosesPtr = (debugInfo == 0) ? 0 : &(debugInfo->initialPoses);
+    it->second.estimatePose(bgrImage, glassMask, currentPoses, currentPosesQualities, &tablePlane, initialSilhouettesPtr, initialPosesPtr);
+#ifdef VERBOSE
+    std::cout << "done." << std::endl;
+    std::cout << "detected poses number: " << currentPoses.size() << std::endl;
+    std::cout << "detected poses: " << currentPoses.size() << std::endl;
+	
+#endif
+    if (debugInfo != 0)
+    {
+      std::copy(initialSilhouettes.begin(), initialSilhouettes.end(), std::back_inserter(debugInfo->initialSilhouettes));
+    }
+    if (!currentPoses.empty())
+    {
+      std::copy(currentPoses.begin(), currentPoses.end(), std::back_inserter(poses_cam));
+      std::copy(currentPosesQualities.begin(), currentPosesQualities.end(), std::back_inserter(posesQualities));
+      for (size_t i = 0; i < currentPoses.size(); ++i)
+      {
+        detectedObjectNames.push_back(it->first);
+      }
+    }
+  }
+}
+
+
 void Detector::visualize(const std::vector<PoseRT> &poses, const std::vector<std::string> &objectNames, cv::Mat &image,
                          const DebugInfo *debugInfo) const
 {

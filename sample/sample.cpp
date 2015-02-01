@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
   vector<float> errors;
   vector<string> detectedObjectsNames;
   Detector::DebugInfo debugInfo;
-  detector.detect(image, depth, registrationMask,
+  detector.detect(image, highlightImg, depth, registrationMask,
                   poses, errors, detectedObjectsNames, &debugInfo);
   std::cout << "\nposes rotation and trans in sample: " << poses[0].getProjectiveMatrix() << std::endl;
   std::cout << "done." << std::endl;

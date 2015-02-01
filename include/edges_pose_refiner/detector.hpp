@@ -137,6 +137,14 @@ namespace transpod
                 std::vector<PoseRT> &poses_cam, std::vector<float> &posesQualities, std::vector<std::string> &objectNames,
                 DebugInfo *debugInfo = 0) const;
 
+    void detect(const cv::Mat &bgrImage, const cv::Mat &srcHImage, const cv::Mat &depth, const cv::Mat &registrationMask,
+                std::vector<PoseRT> &poses_cam, std::vector<float> &posesQualities, std::vector<std::string> &objectNames,
+                DebugInfo *debugInfo = 0) const;
+                
+    void detect(const cv::Mat &bgrImage, const cv::Mat &srcHImage, const cv::Mat &depth, const cv::Mat &registrationMask, const std::vector<cv::Point3f> &sceneCloud,
+                std::vector<PoseRT> &poses_cam, std::vector<float> &posesQualities, std::vector<std::string> &objectNames,
+                DebugInfo *debugInfo = 0) const;
+
     /** \brief Visualize detected poses
      *
      * \param poses detected poses to be visualized
