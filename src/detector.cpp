@@ -56,7 +56,12 @@ void Detector::addTrainObject(const std::string &objectName, const std::vector<c
 void Detector::addTrainObject(const std::string &objectName, const EdgeModel &edgeModel)
 {
   PoseEstimator estimator(srcCamera);
+
+  std::cout << "before set model" << std::endl;
+
   estimator.setModel(edgeModel);
+  
+  std::cout << "set model successfully" << std::endl;
 
   addTrainObject(objectName, estimator);
 }
