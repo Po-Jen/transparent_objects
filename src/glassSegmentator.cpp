@@ -698,7 +698,7 @@ void GlassSegmentator::rickySegment(const cv::Mat &bgrImage, const cv::Mat &HIma
 	cv::rectangle(fillMat, Point( 30, 30), Point(590, 430), Scalar(255, 255, 255), -1, 8);
 	cv::bitwise_and(fillMat, mat, mat);
 
-#if 1	
+#if 0	
 	imshow("Mat after morph", mat);
 	imshow("Mat after fill", mat);
 	waitKey();

@@ -31,6 +31,15 @@ int main(int argc, char *argv[])
   Mat highlightImg = getHighlightImage(image);
   std::cout << "done." << std::endl;
 
+  /*
+  std::cout<<"#rows:"<< objectPointCloud_1.rows<<", #cols:"<<objectPointCloud_1.cols<<std::endl;
+  std::cout<<"#rows:"<< objectPointCloud_2.rows<<", #cols:"<<objectPointCloud_2.cols<<std::endl;
+  std::cout<<"#rows:"<< objectNormals_1.rows<<", #cols:"<<objectNormals_1.cols<<std::endl;
+  std::cout<<"#rows:"<< objectNormals_2.rows<<", #cols:"<<objectNormals_2.cols<<std::endl;
+  */
+  //imshow("pcd 1",objectPointCloud_1);
+  //waitKey();
+  
   // 2. Initialize the detector
   std::cout << "Training...  " << std::flush;
   //    A. set morphology parameters of glass segmentation
@@ -39,8 +48,9 @@ int main(int argc, char *argv[])
   params.glassSegmentationParams.openingIterations = 10;
   //    B. add train objects into the detector
   Detector detector(camera, params);
-  //detector.addTrainObject(objectName_1, objectPointCloud_1, objectNormals_1);
   detector.addTrainObject(objectName_2, objectPointCloud_2, objectNormals_2);
+  std::cout << "obj 2 done." << std::endl;
+  detector.addTrainObject(objectName_1, objectPointCloud_1, objectNormals_1);
   std::cout << "done." << std::endl;
 
   // 3. Detect transparent objects
@@ -69,8 +79,10 @@ void readData(const string &pathToDemoData, PinholeCamera &camera,
               Mat &objectPointCloud_1, Mat &objectNormals_1, Mat &objectPointCloud_2, Mat &objectNormals_2,
               Mat &registrationMask, Mat &image, Mat &depth)
 {
-  const string objectPointCloudFilename_1 = pathToDemoData + "/trainObject_1.ply";
+  //const string objectPointCloudFilename_1 = pathToDemoData + "/trainObject_1.ply";
   const string objectPointCloudFilename_2 = pathToDemoData + "/trainObject_2.ply";
+  //const string objectPointCloudFilename_1 = pathToDemoData + "beaker_model_face_0.ply";
+  const string objectPointCloudFilename_1 = pathToDemoData + "/Testtube.ply";
   const string cameraFilename = pathToDemoData + "/camera.yml";
   const string registrationMaskFilename = pathToDemoData + "/registrationMask.png";
   //const string imageFilename = pathToDemoData + "/image.png";
@@ -85,6 +97,7 @@ void readData(const string &pathToDemoData, PinholeCamera &camera,
   dataImporter.importRegistrationMask(registrationMaskFilename, registrationMask);
   dataImporter.importBGRImage(imageFilename, image);
   dataImporter.importDepth(depthFilename, depth);
+
 }
 
 cv::Mat getHighlightImage(const cv::Mat &bgrImage)
@@ -105,7 +118,7 @@ cv::Mat getHighlightImage(const cv::Mat &bgrImage)
 	for(int k=0; k<T_range; k++)
 	{
 		perimeter[k]=0;
-
+		
 		for(int i=0; i<x; i++)
 		{
 			for(int j=0; j<y; j++)

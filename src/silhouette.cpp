@@ -181,6 +181,8 @@ void Silhouette::init(const cv::Mat &_edgels, const PoseRT &_initialPose_cam)
   initialPose_cam = _initialPose_cam;
 
   CV_Assert(edgels.channels() == 2);
+  std::cout<<"#rows:"<< edgels.rows<<", #cols:"<<edgels.cols<<std::endl;  
+  
   Scalar center = mean(edgels);
   silhouetteCenter = Point2f(center[0], center[1]);
 

@@ -46,7 +46,7 @@ namespace transpod
 
     Ptr<const PinholeCamera> centralCameraPtr = new PinholeCamera(kinectCamera);
     edgeModel.generateSilhouettes(centralCameraPtr, params.silhouetteCount, silhouettes, params.downFactor, params.closingIterationsCount);
-    generateGeometricHashes();
+	generateGeometricHashes();
 
   }
 

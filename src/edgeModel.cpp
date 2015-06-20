@@ -833,7 +833,7 @@ void computeObjectSystem(const std::vector<cv::Point3f> &points, cv::Mat &Rt_obj
 
 void EdgeModel::computeSurfaceEdgelsOrientations(EdgeModel &edgeModel)
 {
-  CV_Assert(edgeModel.hasRotationSymmetry);
+  //CV_Assert(edgeModel.hasRotationSymmetry);
   edgeModel.orientations.clear();
 
   for (size_t i = 0; i < edgeModel.stableEdgels.size(); ++i)
