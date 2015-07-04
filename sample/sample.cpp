@@ -48,8 +48,8 @@ int main(int argc, char *argv[])
   params.glassSegmentationParams.openingIterations = 10;
   //    B. add train objects into the detector
   Detector detector(camera, params);
-  detector.addTrainObject(objectName_2, objectPointCloud_2, objectNormals_2);
-  std::cout << "obj 2 done." << std::endl;
+  //detector.addTrainObject(objectName_2, objectPointCloud_2, objectNormals_2);
+  //std::cout << "obj 2 done." << std::endl;
   detector.addTrainObject(objectName_1, objectPointCloud_1, objectNormals_1);
   std::cout << "done." << std::endl;
 
@@ -65,11 +65,15 @@ int main(int argc, char *argv[])
   std::cout << "done." << std::endl;
 
   // 4. Visualize results
+  /*
   imshow("input rgb image", image);
   imshow("input depth image", depth);
-  showSegmentation(image, debugInfo.glassMask);
   imshow("highlight image", highlightImg);
+  */
+  showSegmentation(image, debugInfo.glassMask);
   detector.showResults(poses, detectedObjectsNames, image);
+  std::cout << "object detected: "<< detectedObjectsNames.size() << std::endl;
+  //std::cout << detectedObjectsNames[0] << std::endl;
   waitKey();
 
   return 0;
@@ -81,14 +85,18 @@ void readData(const string &pathToDemoData, PinholeCamera &camera,
 {
   //const string objectPointCloudFilename_1 = pathToDemoData + "/trainObject_1.ply";
   const string objectPointCloudFilename_2 = pathToDemoData + "/trainObject_2.ply";
-  //const string objectPointCloudFilename_1 = pathToDemoData + "beaker_model_face_0.ply";
-  const string objectPointCloudFilename_1 = pathToDemoData + "/Testtube.ply";
+  //const string objectPointCloudFilename_1 = pathToDemoData + "/beaker_model_face_0.ply";
+  //const string objectPointCloudFilename_1 = pathToDemoData + "/beaker_model_my.ply";
+  //const string objectPointCloudFilename_1 = pathToDemoData + "/4.ply";
+  const string objectPointCloudFilename_1 = pathToDemoData + "/trainObject_3_tube.ply";
   const string cameraFilename = pathToDemoData + "/camera.yml";
   const string registrationMaskFilename = pathToDemoData + "/registrationMask.png";
   //const string imageFilename = pathToDemoData + "/image.png";
   //const string depthFilename = pathToDemoData + "/depth.xml.gz";
-  const string imageFilename = pathToDemoData + "/image_test_6.png";
-  const string depthFilename = pathToDemoData + "/kinect_depth_6.xml.gz";
+  //const string imageFilename = pathToDemoData + "/image_test_6.png";
+  //const string depthFilename = pathToDemoData + "/kinect_depth_6.xml.gz";
+  const string imageFilename = pathToDemoData + "/image_test_4.png";
+  const string depthFilename = pathToDemoData + "/kinect_depth_4.xml.gz";
 
   TODBaseImporter dataImporter;
   dataImporter.importCamera(cameraFilename, camera);

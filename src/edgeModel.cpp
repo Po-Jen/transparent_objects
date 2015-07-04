@@ -243,6 +243,7 @@ void EdgeModel::generateSilhouettes(const cv::Ptr<const PinholeCamera> &pinholeC
   CV_Assert(silhouetteCount > 1);
   const int dim = 3;
 
+  std::cout << "silhouetteCount: " << silhouetteCount << std::endl;
   for(int i = 0; i < silhouetteCount; ++i)
   {
     for (int j = 0; j < silhouetteCount; ++j)
@@ -270,6 +271,7 @@ void EdgeModel::generateSilhouettes(const cv::Ptr<const PinholeCamera> &pinholeC
       getSilhouette(pinholeCamera, silhouettePose_cam, currentSilhouette, downFactor, closingIterationsCount);
       silhouettes.push_back(currentSilhouette);
     }
+	std::cout << "y angle finished once." << std::endl;
   }
 
 #ifdef VISUALIZE_ALL_GENERATED_SILHOUETTES

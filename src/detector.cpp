@@ -56,12 +56,7 @@ void Detector::addTrainObject(const std::string &objectName, const std::vector<c
 void Detector::addTrainObject(const std::string &objectName, const EdgeModel &edgeModel)
 {
   PoseEstimator estimator(srcCamera);
-
-  std::cout << "before set model" << std::endl;
-
   estimator.setModel(edgeModel);
-  
-  std::cout << "set model successfully" << std::endl;
 
   addTrainObject(objectName, estimator);
 }
@@ -436,7 +431,7 @@ void Detector::detect(const cv::Mat &srcBgrImage, const cv::Mat &srcDepth, const
     CV_Error(CV_StsOk, "Cannot segment a transparent object");
   }
 
-#ifdef VISUALIZE_DETECTION
+#if 0
   cv::Mat segmentation = drawSegmentation(bgrImage, glassMask);
   cv::imshow("glassMask", glassMask);
   cv::imshow("segmentation", segmentation);
@@ -621,7 +616,7 @@ void Detector::detect(const cv::Mat &srcBgrImage, const cv::Mat &srcHImage, cons
   }
 
 //#ifdef VISUALIZE_DETECTION
-#if 1
+#if 0
   cv::Mat segmentation = drawSegmentation(bgrImage, glassMask);
   cv::Mat rickySegmentation = drawSegmentation(bgrImage, rickyGlassMask);
   //cv::imshow("glassMask", glassMask);
@@ -691,6 +686,8 @@ void Detector::visualize(const std::vector<PoseRT> &poses, const std::vector<std
 void Detector::visualize(const std::vector<PoseRT> &poses, const std::vector<float> &posesQualities, const std::vector<std::string> &objectNames, cv::Mat &image,
                          const DebugInfo *debugInfo) const
 {
+  std::cout << "poses.size: " << poses.size() << std::endl;
+  
   CV_Assert(poses.size() == objectNames.size());
   if (image.size() != validTestImageSize)
   {
@@ -726,7 +723,8 @@ void Detector::visualize(const std::vector<PoseRT> &poses, const std::vector<flo
 
     const PoseEstimator &estimator = poseEstimators.find(objectNames[i])->second;
     float blendingFactor = estimator.computeBlendingFactor(posesQualities[i]);
-    estimator.visualize(poses[i], image, color, blendingFactor);
+    std::cout << "call estimator visualize" << std::endl;
+	estimator.visualize(poses[i], image, color, blendingFactor);
   }
 }
 
@@ -741,6 +739,7 @@ void Detector::showResults(const std::vector<PoseRT> &poses, const std::vector<s
 void Detector::visualize(const std::vector<PoseRT> &poses, const std::vector<std::string> &objectNames, const std::vector<cv::Point3f> &sceneCloud) const
 {
 #ifdef USE_3D_VISUALIZATION
+
   pcl::PointCloud<pcl::PointXYZ> cloud;
   cv2pcl(sceneCloud, cloud);
   CV_Assert(poses.size() == objectNames.size());
